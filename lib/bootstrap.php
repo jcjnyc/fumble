@@ -38,7 +38,7 @@ function parseRequest(){
   // $in HOLDS THE PATH INFO FROM REDIR
   if( isset( $_GET['in'] )  ){
 
-    if($_GET['in'] == '/index.php'){
+    if($_GET['in'] == '/index.html'){
       return($data); // RETURN DEFAULT ROUTE IF SOMEONE HITS DIRECTLY
     }else{      
       $tmp = explode('/',$_GET['in'],4);    

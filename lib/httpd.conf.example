@@ -1,0 +1,22 @@
+## APACHE VHOST SITES                                                                                                                                                    
+<VirtualHost *:80>
+  ServerName test.domain.com
+  DocumentRoot /usr/local/apache/test
+
+  ## AUTH IF YOU WANT IT
+  <Directory /usr/local/apache/test >
+   Options +Indexes
+   AuthType basic
+   AuthName "demo area"
+   AuthBasicProvider file
+   AuthUserFile /etc/httpd/conf.d/htpass.txt
+   Require valid-user
+  </Directory>
+
+  ## REDIR TO INDEX  
+  RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.*)$ /index.php?in=$1 [QSA,L]
+
+</VirtualHost>  

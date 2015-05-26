@@ -1,3 +1,4 @@
-vendors/*
+composer.lock
+vendor/*
 templates/cache/*
-
+*~

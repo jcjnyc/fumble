@@ -17,11 +17,13 @@ if ( isValidController( $request['controller'] ) ) {
   if ( method_exists($controller, $request['action'] ) ){
     // CALL THE PRESCRIBED ACTION METHOD 
     $controller->{$request['action']}();
+  }else{
+    error_log("no valid method found");
+    raw();
   }
   
 }else{
+  error_log("no valid controller found");
   raw();
-  print "no valid controller found\n";
-  print_r($request);
   
 } 

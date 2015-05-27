@@ -10,10 +10,10 @@ define('DB_NAME', 'cb');
 define('DB_PORT', 3306);
 
 // CHARTBEAT STUFF 
-define('SOURCE_URLS', '[ {"gizmodo": "http://api.chartbeat.com/live/toppages/?apikey=317a25eccba186e0f6b558f45214c0e7&host=gizmodo.com&limit=100" },
-                         {"test": "http://someurl" } ]' );
+define('SOURCE_URLS', '[ {"gizmodo": "http://api.chartbeat.com/live/toppages/?apikey=317a25eccba186e0f6b558f45214c0e7&host=gizmodo.com&limit=100" }
+                       ]' );
 define('MAX_BATCH', 100);
-
+define('SITE_LIST', 'gizmodo');
 
 // PATHS 
 define('BASE_DIR',   dirname(__DIR__));

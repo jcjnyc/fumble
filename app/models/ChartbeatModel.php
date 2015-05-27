@@ -12,8 +12,6 @@ class ChartbeatModel extends BaseModel {
     $this->dbc = DB::getConnect();    
   }
 
-
-  
   // RETURN THE TRENDING DATA 
   public function showTrending( $site, $interval ){
     $intervals = array();
@@ -34,28 +32,32 @@ class ChartbeatModel extends BaseModel {
 
 
   // METHOD TO IMPORT THE CHARTBEAT DATA SET
-  public function importData( $site ){
+  public function importData( $site_list ){
 
     // GET THE RUN BATCH ID
     $batch = $this->dbc->doAction('insert into run (run_date) values( now() )');
 
-    // DB COLUMNS -- NEED TO ADD SITE DATA AND MAKE AoH
-    foreach( json_decode( file_get_contents( $this->getSource($site) ) ) as $row ){
-      $d = array();
-      $d['batch'] = $batch;
-      $d['site']  = $site; 
-      $d['i']     = $row->i; 
-      $d['path']  = $row->path;
-      $d['visitors'] = $row->visitors;
-      $data[] = $d;
-    }
-    
-    // THIS SHOULD INSERT ONE ROW FOR EACH SITE+PATH FOR EACH RUN 
-    $this->dbc->insertRows( 'toppages', array_keys($data[0]), $data );
+    // BATCH,SITE,PATH IS KEY THAT WE WORK AROUND
+    foreach( $site_list as $site ){
 
-    // KEEP THE LAST 'MAX BATCH' RUNS
-    if( ( $batch - MAX_BATCH ) > 0){
-      $this->dbc->runQuery('delete from toppages where batch < ?', [ $batch - MAX_BATCH ]);
+      // DB COLUMNS -- NEED TO ADD SITE DATA AND MAKE AoH
+      foreach( json_decode( file_get_contents( $this->getSource($site) ) ) as $row ){
+	$d = array();
+	$d['batch'] = $batch;
+	$d['site']  = $site; 
+	$d['i']     = $row->i; 
+	$d['path']  = $row->path;
+	$d['visitors'] = $row->visitors;
+	$data[] = $d;
+      }
+      
+      // THIS SHOULD INSERT ONE ROW FOR EACH SITE+PATH FOR EACH RUN 
+      $this->dbc->insertRows( 'toppages', array_keys($data[0]), $data );
+      
+      // KEEP THE LAST 'MAX BATCH' RUNS
+      if( ( $batch - MAX_BATCH ) > 0){
+	$this->dbc->runQuery('delete from toppages where batch < ?', [ $batch - MAX_BATCH ]);
+      }
     }
 
   }

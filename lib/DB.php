@@ -107,6 +107,14 @@ class DB {
     return ( $this->placeholderQuery ( 'insert into', $table, $colList, $data) );
   }
 
+
+  // @param string name of table 
+  // @param array list of table columns
+  // @param array AoH array( array(col_name => col_val), array(col_name => col_val2) ) 
+  public function insertUpdateRows($table, $colList = array(), $data, $update ){
+    return ( $this->placeholderQuery ( 'insert into', $table, $colList, $data, ' ON DUPLICATE KEY UPDATE '.$update.' = :'.$update ) );
+  }
+
   // @param string name of table 
   // @param array list of table columns
   // @param array AoH array( array(col_name => col_val), array(col_name => col_val2) ) 
@@ -118,14 +126,14 @@ class DB {
   // @param array list of table columns
   // @param array AoH array( array(col_name => col_val), array(col_name => col_val2) ) 
   public function deleteRows($table, $colList = array(), $data){
-    return ( $this->placeholderQuery ( 'delete', $table, $colList, $data) );
+    return ( $this->placeholderQuery ( 'delete from', $table, $colList, $data) );
   }
 	
   // REPLACE USING PLACE HOLDERS 
   // @param string table name 
   // @param array list of columns 
   // @param array AoH of data - one containing array, one row of data per line
-  public function placeholderQuery($action, $table, $colList = array(), $data){
+  public function placeholderQuery($action, $table, $colList = array(), $data, $update = null){
     if($this->debug != 0){
       print $action." ".$table." ".implode(',',$colList)." ".print_r($data,true)."\n";
     }
@@ -139,7 +147,7 @@ class DB {
   
     $placeHolder = implode(',',$q);
 
-    $baseSql = $action.' '.$table.' ( '.implode(',', $colList).' ) values ( '.$placeHolder.' )';
+    $baseSql = $action.' '.$table.' ( '.implode(',', $colList).' ) values ( '.$placeHolder.' )'.$update;
 
     if ($this->debug != 0) print $baseSql ."\n";
 
@@ -160,12 +168,77 @@ class DB {
     return($x);
 
   }
-   
-  // thank you - 
-  // http://stackoverflow.com/questions/173400/php-arrays-a-good-way-to-check-if-an-array-is-associative-or-sequential
-  function isAssoc($arr)  {
-    return array_keys($arr) !== range(0, count($arr) - 1);
+
+
+  /** getModelJoinCols
+   * 
+   * get joined set of columns 
+   * 
+   * @param array list of tables and prefix in association eg) array( 'table' => 'prefix' )
+   * @param array list of columns (with prefix already included ) eg) array(t1.id, t2.id, ... )
+   * @param array list of join defs and join types eg) array('t1.id = t2.subId' => ' JOIN ', 't2.name = t3.name' => 'LEFT OUTER JOIN ')
+   * @param string where statement without 'where'
+   * @param array list of columns to order by (make sure it has prefix!)
+   * @param string limit number
+   * @return array array of rows
+   * 
+   **/
+  public function getModelJoinCols($tables, $cols, $joins, $where='', $order=array(), $limit=''){
+    $table_names = array_keys($tables);
+    $table_prefixes = array_values($tables);
+    
+    $c = 0;
+    
+    $sql = 'SELECT '.implode(',',$cols).' FROM ';
+    
+    foreach($joins as $join => $type){
+      if ($c ==  0){
+	$sql .= '`'.array_shift($table_names).'`'.' '.array_shift($table_prefixes).' '.$type.' '.array_shift($table_names).' '.array_shift($table_prefixes).' ON ( '.$join.' ) ';
+	++$c;
+      }else{
+	$sql .= ' '.$type.' `'.array_shift($table_names).'` '.array_shift($table_prefixes).' ON ( '.$join.' ) ';
+      }
+    }
+  
+    if (!empty($where))    $sql .= ' WHERE '.$where;
+    if (count($order) > 0) $sql .= ' ORDER BY '.count($order).implode(',',$order);
+    if (!empty($limit))    $sql .= ' LIMIT '.$limit;
+
+    return( $this->runQuery( $sql) );
+
   }
+   
+
+
+  /** getModelCols
+   *
+   * get all column data from model
+   *
+   * @param string table name
+   * @param mixed list of columns or empty for *
+   **/
+  public function getModelCols($table,$cols=array('*'),$where=''){
+    $select = ' SELECT '.implode(',',$cols);
+    $from   = ' FROM `'.$this->getSchema().'`.`'.$table.'` ';
+    if(!empty($where) && !preg_match('/WHERE/',$where) ) $where = ' WHERE '.$where;     
+    $sql = $select.' '.$from.' '.$where;
+    return( $this->runQuery( $sql ) );
+  }
+
+
+  /** getMaxModelCol
+   *
+   * get the maximum value for one column and return just the value 
+   *
+   * @param string table name
+   * @param string column
+   **/
+  public function getMaxModelCol($table,$col){
+    $col = 'max('.$col.') as maxCol ';
+    $out = $this->getModelCols($table, array($col));
+    return $out[0]['maxCol'];
+  }
+
 
 
   // GAG LOUDLY IF THERE IS ANY SORT OF DATA ERROR
@@ -180,7 +253,7 @@ class DB {
   // - so find an existing table, get the definiitons and create a new table with 
   //   the columns run_id, run_date, run_time prefixed :)
   // @param string existing table name 
-  function create_snapshot_table($in){
+  public function create_snapshot_table($in){
     
     $snapshot = 'snapshot_'.$in;
     
@@ -207,7 +280,7 @@ class DB {
 
 
   // RETURN INFO ABOUT TABLE FROM INFORMATION_SCHEMA 
-  function get_table_def($in){
+  public function get_table_def($in){
     
     $sql = 'select column_name as col, column_type as definition from information_schema.columns  where table_name = ? and table_schema = ? ';
 
@@ -228,7 +301,7 @@ class DB {
   // @param string db engine 
   // @param string character set
   // @param array any multi-column or primary key sets -- not yet in use
-  function create_table_from_def($table, $col_def, $engine = 'InnoDB', $charset='utf8', $index = ''){
+  public function create_table_from_def($table, $col_def, $engine = 'InnoDB', $charset='utf8', $index = ''){
     $cols = array();
     foreach($col_def as $column){
       $cols[] = implode(' ', $column);
@@ -252,7 +325,7 @@ class DB {
   
   // DROP TABLE BY NAME
   // @param string table name to drop 
-  function drop_table_by_name($table){
+  public function drop_table_by_name($table){
     $sql = 'DROP TABLE IF EXISTS '.$table;
     if ( $this->doAction($sql) ){
       return (1);
@@ -262,6 +335,13 @@ class DB {
     }
   }
   
+
+  // thank you - 
+  // http://stackoverflow.com/questions/173400/php-arrays-a-good-way-to-check-if-an-array-is-associative-or-sequential
+  public function isAssoc($arr)  {
+    return array_keys($arr) !== range(0, count($arr) - 1);
+  }
+
   
   
   }

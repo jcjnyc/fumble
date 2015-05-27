@@ -4,10 +4,16 @@ error_reporting(E_ALL);
 
 // DB 
 define('DB_HOST', 'localhost');
-define('DB_USER', 'username');
-define('DB_PASS', 'password');
-define('DB_NAME', 'db_name');
+define('DB_USER', 'james');
+define('DB_PASS', 'slacker');
+define('DB_NAME', 'cb');
 define('DB_PORT', 3306);
+
+// CHARTBEAT STUFF 
+define('SOURCE_URLS', '[ {"gizmodo": "http://api.chartbeat.com/live/toppages/?apikey=317a25eccba186e0f6b558f45214c0e7&host=gizmodo.com&limit=100" },
+                         {"test": "http://someurl" } ]' );
+define('MAX_BATCH', 100);
+
 
 // PATHS 
 define('BASE_DIR',   dirname(__DIR__));
@@ -17,8 +23,8 @@ define('FILES_DIR',  BASE_DIR.'/files');
 define('ASSETS_DIR', BASE_DIR.'/assets');
 
 // CONTROLLERS 
-define('VALID_CONTROLLERS',  'Home,User');
-define('DEFAULT_CONTROLLER', 'Home');
+define('VALID_CONTROLLERS',  'Chartbeat');
+define('DEFAULT_CONTROLLER', 'Chartbeat');
 define('DEFAULT_ACTION',     'index');
 
 

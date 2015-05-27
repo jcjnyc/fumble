@@ -2,7 +2,7 @@
 
 class Chartbeat extends Base {
 
-  public    $debug = 0;
+  public    $debug = 1;
   protected $request; 
   protected $model;
   protected $view; 
@@ -20,10 +20,16 @@ class Chartbeat extends Base {
     $this->view->render( $this->model->doSomething() );
   }
 
-
   public function trending(){
     list( $site, $diff ) = explode( '/', $this->request['data'] ); 
-    raw( $this->model->showTrending( $site, $diff ) );
+
+    if( $out = $this->getCache( $site.'/'.$diff ) ){
+      echo $out;
+    }else{
+      $out = json_encode( $this->model->showTrending( $site, $diff ) );
+      $this->setCache( $site.'/'.$diff, $out );
+      echo $out; 
+    }
   }
 
 

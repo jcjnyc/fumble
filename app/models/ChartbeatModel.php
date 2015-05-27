@@ -23,7 +23,7 @@ class ChartbeatModel extends BaseModel {
       ' from (select site, path, i, visitors from toppages where batch =  ? ) t1 '.
       ' join (select site, path, i, visitors from toppages where batch =  ? ) t2 '.
       ' on (t1.site = t2.site and t1.path = t2.path ) where t2.visitors > t1.visitors '.
-      ' order by increase desc limit 11';
+      ' order by increase desc limit '.TRENDING_RESULT_SET;
     
     $out = $this->dbc->runQuery( $sql, [$max, ($max - $interval) ] );
     return ( $out ); 

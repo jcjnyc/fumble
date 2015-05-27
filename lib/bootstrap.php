@@ -64,9 +64,8 @@ function isValidController( $in ){
 }
 
 function raw($in=null){
-  print "<pre>";
   if(isset($in)){
-    print json_encode($in,JSON_PRETTY_PRINT);
+    echo json_encode($in,JSON_PRETTY_PRINT);
   }else{
     var_export($_SERVER);
   }
